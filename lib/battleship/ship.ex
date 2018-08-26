@@ -20,6 +20,9 @@ defmodule Battleship.Ship do
       end)
     end
 
+    def overlaps?(existing_ship, new_ship), do:
+      not MapSet.disjoint?(existing_ship.coordinates, new_ship.coordinates)
+
     defp add_coordinate(coordinates, %Coordinate{row: row, col: col}, {row_offset, col_offset}) do
       case Coordinate.new(row + row_offset, col + col_offset) do
         {:ok, coordinate} ->
