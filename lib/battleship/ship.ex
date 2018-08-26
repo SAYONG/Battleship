@@ -23,6 +23,18 @@ defmodule Battleship.Ship do
     def overlaps?(existing_ship, new_ship), do:
       not MapSet.disjoint?(existing_ship.coordinates, new_ship.coordinates)
 
+    def guess(ship, coordinate) do
+      case MapSet.member?(ship.coordinates, coordinate) do
+        true ->
+          hit_coordinates = MapSet.put(ship.hit_coordinates, coordinate)
+          {:hit, %{ship | hit_coordinates: hit_coordinates}}
+        false -> :miss
+      end
+    end
+
+    def destroyed?(ship), do:
+      MapSet.equal?(ship.coordinates, ship.hit_coordinates)
+
     defp add_coordinate(coordinates, %Coordinate{row: row, col: col}, {row_offset, col_offset}) do
       case Coordinate.new(row + row_offset, col + col_offset) do
         {:ok, coordinate} ->
