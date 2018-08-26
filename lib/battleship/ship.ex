@@ -32,6 +32,9 @@ defmodule Battleship.Ship do
       end
     end
 
+    def types(), do:
+      [:square, :atoll, :dot, :l_shape, :s_shape]
+
     def destroyed?(ship), do:
       MapSet.equal?(ship.coordinates, ship.hit_coordinates)
 
