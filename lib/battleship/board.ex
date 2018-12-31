@@ -11,7 +11,7 @@ defmodule Battleship.Board do
     end
   end
 
-  def all_ship_positioned?(board) do
+  def all_ships_positioned?(board) do
     Enum.all?(Ship.types, &(Map.has_key?(board, &1)))
   end
 

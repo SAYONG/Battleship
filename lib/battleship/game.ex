@@ -3,6 +3,8 @@ defmodule Battleship.Game do
 
   alias Battleship.{Board, Guesses, Rules, Coordinate, Ship}
 
+  @players [:player1, :player2]
+
   def start_link(name) when is_binary(name), do:
     GenServer.start_link(__MODULE__, name, [])
 
@@ -17,6 +19,9 @@ defmodule Battleship.Game do
 
   def position_ship(game, player, key, row, col), do:
     GenServer.call(game, {:position_ship, player, key, row, col})
+
+  def set_ships(game, player) when player in @players, do:
+    GenServer.call(game, {:set_ships, player})
 
   def handle_call({:add_player, name}, _from, state) do
     with {:ok, rules} <- Rules.check(state.rules, :add_player)
@@ -45,6 +50,20 @@ defmodule Battleship.Game do
         :error -> {:reply, :error, state}
         {:error, :invalid_coordinate} -> {:reply, {:error, :invalid_coordinate}, state}
         {:error, :invalid_ship_shape} -> {:reply, {:error, :invalid_ship_shape}, state}
+      end
+  end
+
+  def handle_call({:set_ships, player}, _from, state) do
+    board = player_board(state, player)
+    with {:ok, rules} <- Rules.check(state.rules, {:set_ships, player}),
+         true <- Board.all_ships_positioned?(board)
+      do
+        state
+          |> update_rules(rules)
+          |> reply_success({:ok, board})
+      else
+        :error -> {:reply, :error, state}
+        false -> {:reply, {:error, :not_all_ships_positioned}, state}
       end
   end
 
