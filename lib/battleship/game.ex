@@ -6,7 +6,7 @@ defmodule Battleship.Game do
   @players [:player1, :player2]
 
   def start_link(name) when is_binary(name), do:
-    GenServer.start_link(__MODULE__, name, [])
+    GenServer.start_link(__MODULE__, name, name: via_tuple(name))
 
   def init(name) do
     player1 = %{name: name, board: Board.new(), guesses: Guesses.new()}
@@ -25,6 +25,8 @@ defmodule Battleship.Game do
 
   def guess_coordinate(game, player, row, col), do:
     GenServer.call(game, {:guess_coordinate, player, row, col})
+
+  def via_tuple(name), do: {:via, Registry, {Registry.Game, name}}
 
   def handle_call({:add_player, name}, _from, state) do
     with {:ok, rules} <- Rules.check(state.rules, :add_player)
