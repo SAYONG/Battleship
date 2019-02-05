@@ -1,5 +1,5 @@
 defmodule Battleship.Game do
-  @tiemout 15000
+  @tiemout 5 * 60 * 1000
 
   use GenServer
 
@@ -38,7 +38,7 @@ defmodule Battleship.Game do
           |> update_rules(rules)
           |> reply_success(:ok)
       else
-        :error -> {:reply, :error, state}
+        :error -> reply_error(:error, state)
     end
   end
 
@@ -54,9 +54,9 @@ defmodule Battleship.Game do
           |> update_rules(rules)
           |> reply_success(:ok)
       else
-        :error -> {:reply, :error, state}
-        {:error, :invalid_coordinate} -> {:reply, {:error, :invalid_coordinate}, state}
-        {:error, :invalid_ship_shape} -> {:reply, {:error, :invalid_ship_shape}, state}
+        :error -> reply_error(:error, state)
+        {:error, :invalid_coordinate} -> reply_error({:error, :invalid_coordinate}, state)
+        {:error, :invalid_ship_shape} -> reply_error({:error, :invalid_ship_shape}, state)
       end
   end
 
@@ -69,8 +69,8 @@ defmodule Battleship.Game do
           |> update_rules(rules)
           |> reply_success({:ok, board})
       else
-        :error -> {:reply, :error, state}
-        false -> {:reply, {:error, :not_all_ships_positioned}, state}
+        :error -> reply_error(:error, state)
+        false -> reply_error({:error, :not_all_ships_positioned}, state)
       end
   end
 
@@ -88,9 +88,13 @@ defmodule Battleship.Game do
           |> update_rules(rules)
           |> reply_success({hit_or_miss, destroyed_ship, win_status})
       else
-        :error -> {:reply, :error, state}
-        {:error, :invalid_coordinate} -> {:reply, {:error, :invalid_coordinate}, state}
+        :error -> reply_error(:error, state)
+        {:error, :invalid_coordinate} -> reply_error({:error, :invalid_coordinate}, state)
       end
+  end
+
+  def handle_info(:timeout, state) do
+    {:stop, {:shutdown, :timeout}, state}
   end
 
   defp player_board(state, player), do: Map.get(state, player).board
@@ -111,4 +115,5 @@ defmodule Battleship.Game do
     %{state | rules: rules}
 
   defp reply_success(state, reply), do: {:reply, reply, state, @tiemout}
+  defp reply_error(state, reply), do: {:reply, reply, state, @tiemout}
 end
