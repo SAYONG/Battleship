@@ -1,4 +1,6 @@
 defmodule Battleship.Game do
+  @tiemout 15000
+
   use GenServer
 
   alias Battleship.{Board, Guesses, Rules, Coordinate, Ship}
@@ -11,7 +13,7 @@ defmodule Battleship.Game do
   def init(name) do
     player1 = %{name: name, board: Board.new(), guesses: Guesses.new()}
     player2 = %{name: nil, board: Board.new(), guesses: Guesses.new()}
-    {:ok, %{player1: player1, player2: player2, rules: Rules.new()}}
+    {:ok, %{player1: player1, player2: player2, rules: Rules.new()}, @tiemout}
   end
 
   def add_player(game, name), do:
@@ -108,5 +110,5 @@ defmodule Battleship.Game do
   defp update_rules(state, rules), do:
     %{state | rules: rules}
 
-  defp reply_success(state, reply), do: {:reply, reply, state}
+  defp reply_success(state, reply), do: {:reply, reply, state, @tiemout}
 end

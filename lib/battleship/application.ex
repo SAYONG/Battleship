@@ -8,7 +8,8 @@ defmodule Battleship.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      {Registry, keys: :unique, name: Registry.Game}
+      {Registry, keys: :unique, name: Registry.Game},
+      Battleship.GameSupervisor
       # Starts a worker by calling: Battleship.Worker.start_link(arg)
       # {Battleship.Worker, arg},
     ]
