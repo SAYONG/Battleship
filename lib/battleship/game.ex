@@ -10,12 +10,6 @@ defmodule Battleship.Game do
   def start_link(name) when is_binary(name), do:
     GenServer.start_link(__MODULE__, name, name: via_tuple(name))
 
-  def init(name) do
-    player1 = %{name: name, board: Board.new(), guesses: Guesses.new()}
-    player2 = %{name: nil, board: Board.new(), guesses: Guesses.new()}
-    {:ok, %{player1: player1, player2: player2, rules: Rules.new()}, @tiemout}
-  end
-
   def add_player(game, name), do:
     GenServer.call(game, {:add_player, name})
 
@@ -29,6 +23,21 @@ defmodule Battleship.Game do
     GenServer.call(game, {:guess_coordinate, player, row, col})
 
   def via_tuple(name), do: {:via, Registry, {Registry.Game, name}}
+
+  def init(name) do
+    {:ok, fresh_start(name), {:continue, :save_state}}
+  end
+
+  def handle_continue(:save_state, state) do
+    name = state.player1.name
+    updated_state =
+      case :ets.lookup(:game_state, name) do
+        [] -> fresh_start(name)
+        [{_, game_state}] -> game_state
+      end
+    :ets.insert(:game_state, {name, updated_state})
+    {:noreply, updated_state, @tiemout}
+  end
 
   def handle_call({:add_player, name}, _from, state) do
     with {:ok, rules} <- Rules.check(state.rules, :add_player)
@@ -114,6 +123,16 @@ defmodule Battleship.Game do
   defp update_rules(state, rules), do:
     %{state | rules: rules}
 
-  defp reply_success(state, reply), do: {:reply, reply, state, @tiemout}
+  defp fresh_start(name) do
+    player1 = %{name: name, board: Board.new(), guesses: Guesses.new()}
+    player2 = %{name: nil, board: Board.new(), guesses: Guesses.new()}
+    %{player1: player1, player2: player2, rules: Rules.new()}
+  end
+
+  defp reply_success(state, reply) do
+    :ets.insert(:game_state, {state.player1.name, state})
+    {:reply, reply, state, @tiemout}
+  end
+
   defp reply_error(state, reply), do: {:reply, reply, state, @tiemout}
 end
