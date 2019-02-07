@@ -24,6 +24,11 @@ defmodule Battleship.Game do
 
   def via_tuple(name), do: {:via, Registry, {Registry.Game, name}}
 
+  def terminate({:shutdown, :timeout}, state) do
+    :ets.delete(:game_state, state.player1.name)
+    :ok
+  end
+
   def init(name) do
     {:ok, fresh_start(name), {:continue, :save_state}}
   end
